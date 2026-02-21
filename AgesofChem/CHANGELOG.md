@@ -1,5 +1,10 @@
 # Ages of Chemistry — Changelog
 
+## v0.9.2 (2026-02-21)
+
+### Hint Flow Optimization
+- **Davy's Legacy:** Shifted the hint away from Silicon (which overlapped with the `75 Discoveries` achievement) to point more thematically toward Calcium/Quicklime.
+- **Noble Pursuit:** Shifted the hint away from Plastics/Semiconductors (which completely overlapped with the `Century Club` achievement) to point toward the final terminal trophies: Cement and the Steam Engine.
 ## v0.9.1 (2026-02-21)
 
 ### Text & Lore Updates — The Accuracy & Quality Pass
