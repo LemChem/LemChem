@@ -3,3 +3,6 @@
 
 # Agents
 .agents/
+
+# Claude Code
+.claude/
