@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ages of Chemistry — Tech Tree</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #12141f; color: #eee; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+#controls { position: fixed; top: 0; left: 0; right: 0; z-index: 10; background: linear-gradient(180deg, #12141fee 80%, #12141f00); padding: 8px 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.legend { display: flex; gap: 4px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 3px; font-size: 9px; opacity: 0.85; padding: 2px 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; border: 1px solid #0003; }
+.zoom-controls { margin-left: auto; display: flex; gap: 4px; }
+.zoom-controls button { background: #2a2a3e; border: 1px solid #444; color: #eee; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.zoom-controls button:hover { background: #3a3a5e; }
+#tooltip { position: fixed; pointer-events: none; z-index: 20; background: #1a1a2eee; border: 1px solid #555; border-radius: 8px; padding: 10px 14px; font-size: 12px; max-width: 300px; display: none; backdrop-filter: blur(8px); box-shadow: 0 4px 20px #0008; }
+#tooltip .tt-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+#tooltip .tt-era { opacity: 0.6; font-size: 11px; margin-bottom: 6px; }
+#tooltip .tt-recipes { font-size: 11px; line-height: 1.5; }
+#tooltip .tt-recipes b { color: #fbbf24; }
+#tooltip .tt-dead { color: #f87171; font-size: 11px; margin-top: 4px; }
+#tooltip .tt-terminal { color: #fbbf24; font-size: 11px; margin-top: 4px; }
+svg { width: 100vw; height: 100vh; cursor: grab; }
+svg:active { cursor: grabbing; }
+.edge { fill: none; stroke-width: 0.8; opacity: 0.2; }
+.edge.highlighted { opacity: 0.9; stroke-width: 2.5; }
+.node-box { cursor: pointer; }
+.node-box:hover rect { stroke-width: 2.5; filter: url(#glow); }
+.node-rect { rx: 3; ry: 3; stroke-width: 1.2; }
+.node-text { fill: #1a1a1a; font-size: 7.5px; font-family: 'Segoe UI', system-ui, sans-serif; pointer-events: none; dominant-baseline: central; text-anchor: middle; }
+.node-terminal .node-rect { stroke-width: 2.5; }
+.node-terminal .node-text { font-weight: 700; font-size: 8px; }
+.node-dead .node-rect { stroke-dasharray: 3,2; }
+.era-label { fill: #fff; opacity: 0.35; font-size: 10px; font-weight: 700; font-family: 'Segoe UI', system-ui, sans-serif; text-anchor: middle; }
+.era-band { opacity: 0.06; }
+.info-panel { position: fixed; bottom: 8px; left: 8px; z-index: 10; background: #12141fcc; border-radius: 6px; padding: 6px 10px; font-size: 10px; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <h1>🧪 Ages of Chemistry — Tech Tree</h1>
+  <div class="legend" id="legend"></div>
+  <div class="zoom-controls">
+    <button onclick="resetView()">Reset</button>
+    <button onclick="zoomBy(1.3)">+</button>
+    <button onclick="zoomBy(0.7)">−</button>
+  </div>
+</div>
+<div id="tooltip"></div>
+<svg id="svg"></svg>
+<div class="info-panel">Scroll to zoom · Drag to pan · Hover for details</div>
+<script>
+const AGES = [
+  { id:'primordial', name:'Primordial', color:'#D7CCC8', border:'#8D6E63', elements:['water','air','earth','wood','stone'] },
+  { id:'stone', name:'Stone Age', color:'#FFAB91', border:'#D84315', elements:['spark','ember','fire','heat','charcoal','ash','steam','smoke','mud','clay','sand','fiber'] },
+  { id:'nature', name:'Nature', color:'#A5D6A7', border:'#388E3C', elements:['plant','fruit','tree','algae','swamp','molten_rock','obsidian','peat'] },
+  { id:'crafting', name:'Crafting', color:'#FFCC80', border:'#E65100', elements:['tool','pottery','brick','kiln','glass','furnace','wheel','bellows','blast_furnace','alembic','glassware','laboratory'] },
+  { id:'mining', name:'Mining', color:'#FFE082', border:'#F9A825', elements:['pressure','coal','crude_oil','copper_ore','tin_ore','iron_ore','zinc_ore','gold_flakes','silver_ore','bauxite','magnesia','limestone'] },
+  { id:'metallurgy', name:'Metallurgy', color:'#B0BEC5', border:'#546E7A', elements:['copper','tin','gold','silver','bronze','bronze_tool','iron','zinc','steel','brass'] },
+  { id:'alchemy', name:'Alchemy', color:'#CE93D8', border:'#7B1FA2', elements:['sulfur','cinnabar','sea_salt','saltpeter','quicklime','slaked_lime','mortar','lye','soda_ash','mercury','mercury_calx','sulfur_fumes','sulfur_trioxide'] },
+  { id:'chemistry', name:'Chemistry', color:'#F48FB1', border:'#C2185B', elements:['oil_of_vitriol','spirit_of_salt','aqua_fortis','aqua_regia','wine','alcohol','vinegar','black_powder_base'] },
+  { id:'enlightenment', name:'Enlightenment', color:'#FFF59D', border:'#F9A825', elements:['static_charge','lightning','voltaic_cell','battery','hydrogen','oxygen','nitrogen','chlorine','carbon_dioxide','carbon'] },
+  { id:'industrial', name:'Industrial', color:'#81D4FA', border:'#0277BD', elements:['potassium','sodium','calcium','magnesium','aluminum','silicon','phosphorus','refrigeration','liquid_air','ammonia','water_pure'] },
+  { id:'modern', name:'Modern Era', color:'#80DEEA', border:'#00838F', elements:['rust','methane','methanol','formaldehyde','table_salt','ammonium_nitrate','calcium_carbonate','sodium_bicarbonate','argon','neon','helium'] },
+  { id:'technologies', name:'Technologies', color:'#FFD54F', border:'#EF6C00', elements:['gunpowder','cement','fertilizer','plastic','dynamite','semiconductor','steam_engine'] },
+];
+const TERMINALS = new Set(['gunpowder','aqua_regia','cement','fertilizer','plastic','dynamite','semiconductor','steam_engine','argon','neon','helium']);
+const REACTIONS = [
+  ['stone','stone','spark'],['spark','wood','ember'],['ember','air','fire'],['fire','fire','heat'],['magnesium','fire','heat'],['fire','wood','charcoal'],['tree','fire','charcoal'],['charcoal','fire','ash'],['fire','water','steam'],['fire','air','smoke'],['earth','water','mud'],['mud','fire','clay'],['mud','heat','clay'],['stone','water','sand'],['earth','fire','molten_rock'],['molten_rock','water','obsidian'],['mud','ash','plant'],['plant','earth','tree'],['tree','heat','fruit'],['tree','water','fruit'],['plant','water','algae'],['plant','mud','swamp'],['plant','plant','fiber'],['stone','wood','tool'],['obsidian','wood','tool'],['clay','fire','pottery'],['clay','heat','brick'],['brick','fire','kiln'],['pottery','fire','kiln'],['sand','kiln','glass'],['sand','heat','glass'],['sand','fire','glass'],['lightning','sand','glass'],['brick','kiln','furnace'],['wood','tool','wheel'],['wood','fiber','bellows'],['furnace','bellows','blast_furnace'],['glass','fire','alembic'],['glass','glass','glassware'],['glassware','brick','laboratory'],['earth','earth','pressure'],['stone','earth','pressure'],['swamp','pressure','peat'],['peat','pressure','coal'],['swamp','heat','crude_oil'],['peat','heat','crude_oil'],['algae','pressure','crude_oil'],['earth','tool','copper_ore'],['stone','tool','tin_ore'],['earth','furnace','iron_ore'],['earth','bronze_tool','iron_ore'],['earth','blast_furnace','zinc_ore'],['stone','blast_furnace','zinc_ore'],['sand','water','gold_flakes'],['stone','furnace','silver_ore'],['sulfur','earth','cinnabar'],['stone','sulfur','cinnabar'],['earth','heat','sulfur'],['molten_rock','air','sulfur'],['water','heat','sea_salt'],['swamp','ash','saltpeter'],['peat','ash','saltpeter'],['stone','heat','limestone'],['earth','pressure','limestone'],['clay','water','bauxite'],['stone','kiln','magnesia'],['earth','kiln','magnesia'],['copper_ore','fire','copper'],['copper_ore','kiln','copper'],['copper_ore','furnace','copper'],['copper_ore','charcoal','copper'],['tin_ore','furnace','tin'],['tin_ore','kiln','tin'],['tin_ore','charcoal','tin'],['gold_flakes','fire','gold'],['gold_flakes','heat','gold'],['silver_ore','furnace','silver'],['copper','tin','bronze'],['bronze','stone','bronze_tool'],['bronze','wood','bronze_tool'],['iron_ore','blast_furnace','iron'],['iron_ore','charcoal','iron'],['zinc_ore','blast_furnace','zinc'],['iron','charcoal','steel'],['iron','coal','steel'],['copper','zinc','brass'],['limestone','fire','quicklime'],['limestone','furnace','quicklime'],['limestone','heat','quicklime'],['quicklime','water','slaked_lime'],['calcium','water','slaked_lime'],['slaked_lime','sand','mortar'],['ash','water','lye'],['sea_salt','ash','soda_ash'],['cinnabar','furnace','mercury'],['cinnabar','heat','mercury'],['mercury','air','mercury_calx'],['sulfur','fire','sulfur_fumes'],['sulfur_fumes','heat','sulfur_trioxide'],['sulfur_fumes','air','sulfur_trioxide'],['sulfur_trioxide','water','oil_of_vitriol'],['sea_salt','oil_of_vitriol','spirit_of_salt'],['hydrogen','chlorine','spirit_of_salt'],['saltpeter','oil_of_vitriol','aqua_fortis'],['spirit_of_salt','aqua_fortis','aqua_regia'],['fruit','water','wine'],['wine','alembic','alcohol'],['wine','heat','alcohol'],['alcohol','air','vinegar'],['alcohol','oxygen','vinegar'],['saltpeter','charcoal','black_powder_base'],['black_powder_base','sulfur','gunpowder'],['glass','fiber','static_charge'],['static_charge','iron','lightning'],['copper','iron','voltaic_cell'],['voltaic_cell','oil_of_vitriol','battery'],['voltaic_cell','vinegar','battery'],['vinegar','iron','hydrogen'],['iron','oil_of_vitriol','hydrogen'],['zinc','spirit_of_salt','hydrogen'],['iron','spirit_of_salt','hydrogen'],['water','battery','hydrogen'],['sodium','water','hydrogen'],['potassium','water','hydrogen'],['mercury_calx','heat','oxygen'],['saltpeter','heat','oxygen'],['air','laboratory','nitrogen'],['spirit_of_salt','battery','chlorine'],['sea_salt','battery','chlorine'],['charcoal','oxygen','carbon_dioxide'],['carbon','oxygen','carbon_dioxide'],['charcoal','heat','carbon'],['coal','heat','carbon'],['battery','lye','potassium'],['battery','soda_ash','sodium'],['battery','quicklime','calcium'],['battery','magnesia','magnesium'],['battery','bauxite','aluminum'],['sand','carbon','silicon'],['glass','carbon','silicon'],['sand','charcoal','silicon'],['ash','furnace','phosphorus'],['ammonia','pressure','refrigeration'],['air','refrigeration','liquid_air'],['nitrogen','hydrogen','ammonia'],['hydrogen','oxygen','water_pure'],['iron','water','rust'],['carbon','hydrogen','methane'],['methane','oxygen','methanol'],['methanol','oxygen','formaldehyde'],['sodium','chlorine','table_salt'],['ammonia','aqua_fortis','ammonium_nitrate'],['quicklime','carbon_dioxide','calcium_carbonate'],['soda_ash','carbon_dioxide','sodium_bicarbonate'],['liquid_air','laboratory','argon'],['liquid_air','battery','neon'],['liquid_air','heat','helium'],['quicklime','clay','cement'],['limestone','clay','cement'],['mortar','clay','cement'],['ammonium_nitrate','phosphorus','fertilizer'],['ammonia','phosphorus','fertilizer'],['methane','chlorine','plastic'],['crude_oil','chlorine','plastic'],['ammonium_nitrate','crude_oil','dynamite'],['silicon','phosphorus','semiconductor'],['silicon','battery','semiconductor'],['steam','wheel','steam_engine'],['steel','coal','steam_engine'],
+];
+
+// Lookups
+const elemToAge={}, ageById={};
+AGES.forEach(a=>{ ageById[a.id]=a; a.elements.forEach(e=>elemToAge[e]=a.id); });
+const downstream={}, upstream={};
+REACTIONS.forEach(([a,b,r])=>{ (downstream[a]??=new Set()).add(r); (downstream[b]??=new Set()).add(r); (upstream[r]??=[]).push([a,b]); });
+const allElem=[]; AGES.forEach(a=>a.elements.forEach(e=>allElem.push(e)));
+const baseSet=new Set(AGES[0].elements);
+const deadEnds=new Set();
+allElem.forEach(e=>{ if(!TERMINALS.has(e)&&!baseSet.has(e)&&!(downstream[e]?.size)) deadEnds.add(e); });
+
+// Compute depth via iterative relaxation (min shortest-recipe-path)
+const depth={};
+AGES[0].elements.forEach(e=>depth[e]=0);
+allElem.forEach(e=>{ if(!(e in depth)) depth[e]=999; });
+for(let i=0,ch=true;i<50&&ch;i++){
+  ch=false;
+  REACTIONS.forEach(([a,b,r])=>{
+    if(depth[a]<999&&depth[b]<999){ const d=Math.max(depth[a],depth[b])+1; if(d<depth[r]){depth[r]=d;ch=true;} }
+  });
+}
+
+// Group by depth
+const byDepth={};
+allElem.forEach(e=>(byDepth[depth[e]]??=[]).push(e));
+const maxDepth=Math.max(...Object.keys(byDepth).map(Number));
+const depthKeys=Object.keys(byDepth).map(Number).sort((a,b)=>a-b);
+
+// Row assignment: limited rows, iterative placement near neighbors
+const NUM_ROWS = 12;
+const row = {};
+const eraOrd = {}; AGES.forEach((a,i)=>a.elements.forEach(e=>eraOrd[e]=i));
+
+// Initial: center each depth column, sorted by era
+depthKeys.forEach(d=>{
+  const el = byDepth[d];
+  el.sort((a,b)=>eraOrd[a]-eraOrd[b]);
+  const n=el.length, start=Math.floor((NUM_ROWS-n)/2);
+  el.forEach((e,i)=>row[e]=Math.max(0,Math.min(NUM_ROWS-1,start+i)));
+});
+
+// Iterative: pull toward connected neighbors
+for(let iter=0;iter<12;iter++){
+  depthKeys.forEach(d=>{
+    const el=byDepth[d];
+    if(el.length>=NUM_ROWS) return;
+    const ideal={};
+    el.forEach(e=>{
+      const conn=[];
+      (upstream[e]||[]).forEach(([a,b])=>{ if(row[a]!=null)conn.push(row[a]); if(row[b]!=null)conn.push(row[b]); });
+      (downstream[e]||new Set()).forEach(t=>{ if(row[t]!=null)conn.push(row[t]); });
+      ideal[e] = conn.length ? conn.reduce((s,v)=>s+v,0)/conn.length : row[e];
+    });
+    el.sort((a,b)=>ideal[a]-ideal[b]);
+    const n=el.length, start=Math.floor((NUM_ROWS-n)/2);
+    el.forEach((e,i)=>row[e]=Math.max(0,Math.min(NUM_ROWS-1,start+i)));
+  });
+}
+
+// Layout
+const NODE_W=82, NODE_H=20, COL_W=115, ROW_H=38, PAD_L=30, PAD_T=50;
+const totalW = PAD_L + (maxDepth+1)*COL_W + PAD_L;
+const totalH = PAD_T + NUM_ROWS*ROW_H + 30;
+const nodePos={};
+allElem.forEach(e=>{ nodePos[e]={ x: PAD_L+depth[e]*COL_W+COL_W/2, y: PAD_T+row[e]*ROW_H+ROW_H/2 }; });
+
+// Era bands (spanning depth range of their elements)
+const eraBands = AGES.map(age=>{
+  const ds=age.elements.map(e=>depth[e]);
+  return { age, x1: PAD_L+Math.min(...ds)*COL_W, x2: PAD_L+(Math.max(...ds)+1)*COL_W };
+});
+
+// === RENDER ===
+const svgEl=document.getElementById('svg'), ns='http://www.w3.org/2000/svg';
+const mainG=document.createElementNS(ns,'g'); svgEl.appendChild(mainG);
+const defs=document.createElementNS(ns,'defs');
+defs.innerHTML=`<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+svgEl.appendChild(defs);
+
+// Era bands
+eraBands.forEach(({age,x1,x2})=>{
+  const r=document.createElementNS(ns,'rect');
+  r.setAttribute('x',x1); r.setAttribute('y',PAD_T-18);
+  r.setAttribute('width',x2-x1); r.setAttribute('height',totalH-PAD_T+12);
+  r.setAttribute('fill',age.color); r.setAttribute('class','era-band'); r.setAttribute('rx',4);
+  mainG.appendChild(r);
+  const t=document.createElementNS(ns,'text');
+  t.setAttribute('x',(x1+x2)/2); t.setAttribute('y',PAD_T-5);
+  t.setAttribute('class','era-label'); t.textContent=age.name;
+  mainG.appendChild(t);
+});
+
+// Edges
+const edgesG=document.createElementNS(ns,'g'); mainG.appendChild(edgesG);
+const edgeSet=new Set(), edgeEls=[];
+REACTIONS.forEach(([a,b,r])=>{
+  [a,b].forEach(src=>{
+    const ek=`${src}|${r}`; if(edgeSet.has(ek))return; edgeSet.add(ek);
+    const p1=nodePos[src],p2=nodePos[r]; if(!p1||!p2)return;
+    const age=ageById[elemToAge[r]];
+    const x1=p1.x+NODE_W/2-2, y1=p1.y, x2=p2.x-NODE_W/2+2, y2=p2.y;
+    const dx=x2-x1, cp=Math.max(Math.abs(dx)*0.35,20);
+    const path=document.createElementNS(ns,'path');
+    if(dx<=0){ const mx=Math.min(x1,x2)-25,my=(y1+y2)/2; path.setAttribute('d',`M${x1},${y1} C${x1-15},${y1} ${mx},${my-15} ${mx},${my} S${x2-15},${y2} ${x2},${y2}`); }
+    else path.setAttribute('d',`M${x1},${y1} C${x1+cp},${y1} ${x2-cp},${y2} ${x2},${y2}`);
+    path.setAttribute('class','edge'); path.setAttribute('stroke',age.border);
+    path.dataset.src=src; path.dataset.tgt=r;
+    edgesG.appendChild(path); edgeEls.push(path);
+  });
+});
+
+// Nodes
+const nodesG=document.createElementNS(ns,'g'); mainG.appendChild(nodesG);
+const nodeEls={};
+allElem.forEach(key=>{
+  const p=nodePos[key]; if(!p)return;
+  const age=ageById[elemToAge[key]],isT=TERMINALS.has(key),isD=deadEnds.has(key);
+  const name=key.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const g=document.createElementNS(ns,'g');
+  g.setAttribute('transform',`translate(${p.x-NODE_W/2},${p.y-NODE_H/2})`);
+  g.setAttribute('class','node-box'+(isT?' node-terminal':'')+(isD?' node-dead':''));
+  g.dataset.key=key;
+  const rect=document.createElementNS(ns,'rect');
+  rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
+  rect.setAttribute('fill',isT?'#FFD54F':age.color); rect.setAttribute('stroke',isT?'#EF6C00':age.border);
+  rect.setAttribute('class','node-rect'); g.appendChild(rect);
+  const text=document.createElementNS(ns,'text');
+  text.setAttribute('x',NODE_W/2); text.setAttribute('y',NODE_H/2);
+  text.setAttribute('class','node-text'); text.textContent=name; g.appendChild(text);
+  nodesG.appendChild(g); nodeEls[key]=g;
+});
+
+// Zoom/Pan
+let tf={x:0,y:0,k:1},dragging=false,ds={x:0,y:0};
+function apply(){mainG.setAttribute('transform',`translate(${tf.x},${tf.y}) scale(${tf.k})`);}
+function resetView(){ const sw=innerWidth,sh=innerHeight,k=Math.min(sw/totalW,sh/totalH)*0.88; tf={x:(sw-totalW*k)/2,y:(sh-totalH*k)/2+15,k}; apply(); }
+window.resetView=resetView;
+window.zoomBy=f=>{const cx=innerWidth/2,cy=innerHeight/2,nk=Math.max(.05,Math.min(10,tf.k*f));tf.x=cx-(cx-tf.x)*(nk/tf.k);tf.y=cy-(cy-tf.y)*(nk/tf.k);tf.k=nk;apply();};
+const sv=document.getElementById('svg');
+sv.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY>0?.9:1.1,r=sv.getBoundingClientRect(),cx=e.clientX-r.left,cy=e.clientY-r.top,nk=Math.max(.05,Math.min(10,tf.k*f));tf.x=cx-(cx-tf.x)*(nk/tf.k);tf.y=cy-(cy-tf.y)*(nk/tf.k);tf.k=nk;apply();},{passive:false});
+sv.addEventListener('pointerdown',e=>{if(e.target.closest('.node-box'))return;dragging=true;ds={x:e.clientX-tf.x,y:e.clientY-tf.y};sv.setPointerCapture(e.pointerId);});
+sv.addEventListener('pointermove',e=>{if(!dragging)return;tf.x=e.clientX-ds.x;tf.y=e.clientY-ds.y;apply();});
+sv.addEventListener('pointerup',()=>dragging=false);
+resetView();
+
+// Tooltip
+const tip=document.getElementById('tooltip');
+Object.entries(nodeEls).forEach(([key,g])=>{
+  g.addEventListener('mouseover',ev=>{
+    const age=ageById[elemToAge[key]],name=key.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    let h=`<div class="tt-name">${name}</div><div class="tt-era">${age.name} · depth ${depth[key]}</div>`;
+    const r=upstream[key];
+    if(r){const u=[...new Set(r.map(([a,b])=>`${a.replace(/_/g,' ')} + ${b.replace(/_/g,' ')}`))];h+=`<div class="tt-recipes"><b>Made from:</b><br>${u.join('<br>')}</div>`;}
+    else h+=`<div class="tt-recipes"><b>Base element</b></div>`;
+    if(downstream[key]?.size)h+=`<div class="tt-recipes" style="margin-top:4px"><b>Used in:</b> ${[...downstream[key]].map(e=>e.replace(/_/g,' ')).join(', ')}</div>`;
+    if(TERMINALS.has(key))h+=`<div class="tt-terminal">🏆 Terminal</div>`;
+    if(deadEnds.has(key))h+=`<div class="tt-dead">⚠ Dead end</div>`;
+    tip.innerHTML=h;tip.style.display='block';
+    edgeEls.forEach(p=>{if(p.dataset.src===key||p.dataset.tgt===key)p.classList.add('highlighted');else p.style.opacity='0.04';});
+  });
+  g.addEventListener('mousemove',e=>{tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';});
+  g.addEventListener('mouseout',()=>{tip.style.display='none';edgeEls.forEach(p=>{p.classList.remove('highlighted');p.style.opacity='';});});
+});
+
+// Legend
+const leg=document.getElementById('legend');
+AGES.forEach(a=>{const d=document.createElement('div');d.className='legend-item';d.innerHTML=`<span class="legend-dot" style="background:${a.color};border-color:${a.border}"></span>${a.name}`;leg.appendChild(d);});
+</script>
+</body>
+</html>

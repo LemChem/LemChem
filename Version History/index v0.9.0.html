@@ -1,0 +1,956 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>LemChem - Ages of Chemistry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <!-- Preconnect to Google Fonts for faster font loading on game page -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts - loaded async to avoid blocking first paint -->
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap"
+            rel="stylesheet">
+    </noscript>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #f8fafc;
+            --bg-element: #ffffff;
+            --border: #cbd5e1;
+            --text: #334155;
+            --text-dim: #64748b;
+            --accent: #33A83E;
+            --accent-hover: #228B2E;
+            --text-light: #f8fafc;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        html {
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Background Animations - Game Elements */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Better than 100vh for mobile fixed containers */
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .workspace-element {
+            position: absolute;
+            top: 100%;
+            /* Start just below the viewport reliably */
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-bottom: 3px solid #ccc;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            min-width: 90px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            animation: float-element linear infinite;
+            will-change: transform, opacity;
+            /* Force mobile hardware acceleration */
+            user-select: none;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        .workspace-element .symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #1e293b;
+        }
+
+        .workspace-element .name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes float-element {
+            0% {
+                transform: translate3d(0, 20px, 0) rotate(0deg) scale(0.9);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            85% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate3d(0, -120vh, 0) rotate(12deg) scale(1.05);
+                opacity: 0;
+            }
+        }
+
+        /* Assigning random values in CSS for background particles */
+        .el-1 {
+            left: 8%;
+            animation-duration: 22s;
+            animation-delay: 0s;
+            border-bottom-color: #3b82f6;
+        }
+
+        /* Water */
+        .el-2 {
+            left: 24%;
+            animation-duration: 28s;
+            animation-delay: -5s;
+            border-bottom-color: #ef4444;
+        }
+
+        /* Fire */
+        .el-3 {
+            left: 41%;
+            animation-duration: 20s;
+            animation-delay: -12s;
+            border-bottom-color: #8b5cf6;
+        }
+
+        /* Magic */
+        .el-4 {
+            left: 58%;
+            animation-duration: 35s;
+            animation-delay: -3s;
+            border-bottom-color: #10b981;
+        }
+
+        /* Plant */
+        .el-5 {
+            left: 75%;
+            animation-duration: 25s;
+            animation-delay: -18s;
+            border-bottom-color: #f59e0b;
+        }
+
+        /* Gold */
+        .el-6 {
+            left: 88%;
+            animation-duration: 30s;
+            animation-delay: -8s;
+            border-bottom-color: #64748b;
+        }
+
+        /* Iron */
+        .el-7 {
+            left: 16%;
+            animation-duration: 32s;
+            animation-delay: -22s;
+            border-bottom-color: #f59e0b;
+        }
+
+        /* Primordial */
+        .el-8 {
+            left: 33%;
+            animation-duration: 24s;
+            animation-delay: -15s;
+            border-bottom-color: #0ea5e9;
+        }
+
+        /* Glass */
+        .el-9 {
+            left: 50%;
+            animation-duration: 27s;
+            animation-delay: -9s;
+            border-bottom-color: #ef4444;
+        }
+
+        /* Heat */
+        .el-10 {
+            left: 68%;
+            animation-duration: 29s;
+            animation-delay: -19s;
+            border-bottom-color: #84cc16;
+        }
+
+        /* Acid */
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(248, 250, 252, 0.9);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 35px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+            display: flex;
+            align-items: baseline;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logo-lem {
+            color: #5A5A5A;
+        }
+
+        .logo-chem {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: var(--bg-element);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem 2rem 2rem;
+        }
+
+        .game-logo {
+            margin-bottom: 2rem;
+            animation: float 6s ease-in-out infinite;
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .game-title {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin: 0;
+            color: #1e293b;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+
+        .game-subtitle {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: #475569;
+            max-width: 650px;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .play-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #33A83E, #228B2E);
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 1.25rem 3.5rem;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(51, 168, 62, 0.4), 0 0 0 0 rgba(51, 168, 62, 0.4);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .play-button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(51, 168, 62, 0.5), 0 0 0 4px rgba(51, 168, 62, 0.2);
+        }
+
+        .play-button:hover::after {
+            opacity: 1;
+        }
+
+        .play-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .play-icon {
+            font-size: 1.6rem;
+        }
+
+        /* Cards Section (Glassmorphism) */
+        .cards-section-wrapper {
+            position: relative;
+            background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.6) 20%, rgba(248, 250, 252, 0.95) 100%);
+        }
+
+        .bg-blobs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            animation: float-blob 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes float-blob {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(40px, -60px) scale(1.1);
+            }
+        }
+
+        .blob-1 {
+            top: 5%;
+            left: 5%;
+            width: 400px;
+            height: 400px;
+            background: #0ea5e9;
+        }
+
+        .blob-2 {
+            top: 35%;
+            right: 5%;
+            width: 350px;
+            height: 350px;
+            background: #FF4500;
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            bottom: 0;
+            left: 30%;
+            width: 500px;
+            height: 300px;
+            background: #33A83E;
+            animation-delay: -10s;
+        }
+
+        .info-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            padding: 4rem 2rem 8rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.9);
+            border-left: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2.5rem 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, opacity 0.6s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .info-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .card-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            transform: rotate(-3deg);
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover .card-icon {
+            transform: rotate(5deg) scale(1.1);
+        }
+
+        .card-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .theme-about .card-icon {
+            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .theme-community .card-icon {
+            background: linear-gradient(135deg, #FF4500, #ff7b00);
+            box-shadow: 0 8px 16px rgba(255, 69, 0, 0.3);
+        }
+
+        .theme-support .card-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .info-card h2 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .info-card p {
+            font-size: 1.05rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
+        }
+
+        .info-card p strong {
+            color: #334155;
+        }
+
+        .info-card a {
+            margin-top: auto;
+        }
+
+        .reddit-btn,
+        .donate-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.8rem 1.8rem;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .reddit-btn {
+            background: #FF4500;
+        }
+
+        .reddit-btn:hover {
+            background: #e03d00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 69, 0, 0.4);
+        }
+
+        .donate-btn {
+            background: #33A83E;
+        }
+
+        .donate-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(51, 168, 62, 0.4);
+        }
+
+        .lemchem-branding {
+            position: absolute;
+            bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .lemchem-branding:hover {
+            opacity: 1;
+        }
+
+        .lemchem-logo-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .lemchem-logo-text span.green {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 0.75rem 0.75rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .nav-links {
+                gap: 0.25rem;
+            }
+
+            .icon-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .game-title {
+                font-size: 2.4rem;
+                word-wrap: break-word;
+            }
+
+            .game-subtitle {
+                font-size: 1.1rem;
+                padding: 0 1rem;
+            }
+
+            .play-button {
+                font-size: 1.25rem;
+                padding: 1rem 2.5rem;
+            }
+
+            .game-logo {
+                width: 110px;
+                height: 110px;
+            }
+
+            .lemchem-branding {
+                bottom: 1.5rem;
+            }
+
+            /* Mobile fixes for the info cards */
+            .info-cards-container {
+                padding: 1rem 1rem 4rem 1rem;
+                gap: 2rem;
+            }
+
+            .info-card {
+                padding: 1.5rem 1.25rem;
+                border-radius: 16px;
+                /* Add extra scroll padding specifically for these cards on mobile so they center well */
+                scroll-margin-top: 15vh;
+            }
+
+            .card-icon {
+                width: 56px;
+                height: 56px;
+                border-radius: 14px;
+                margin-bottom: 1rem;
+            }
+
+            .card-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+
+            .info-card h2 {
+                font-size: 1.4rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .info-card p {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+
+            .reddit-btn,
+            .donate-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Animated Background Gameplay Elements -->
+    <div class="particles-container">
+        <div class="workspace-element el-1">
+            <span class="symbol">H₂O</span>
+            <span class="name">Water</span>
+        </div>
+        <div class="workspace-element el-2">
+            <span class="symbol">🔥</span>
+            <span class="name">Fire</span>
+        </div>
+        <div class="workspace-element el-3">
+            <span class="symbol">Au</span>
+            <span class="name">Gold</span>
+        </div>
+        <div class="workspace-element el-4">
+            <span class="symbol">🌿</span>
+            <span class="name">Plant</span>
+        </div>
+        <div class="workspace-element el-5">
+            <span class="symbol">⚡</span>
+            <span class="name">Spark</span>
+        </div>
+        <div class="workspace-element el-6">
+            <span class="symbol">Fe</span>
+            <span class="name">Iron</span>
+        </div>
+        <div class="workspace-element el-7">
+            <span class="symbol">🪨</span>
+            <span class="name">Stone</span>
+        </div>
+        <div class="workspace-element el-8">
+            <span class="symbol">🔬</span>
+            <span class="name">Laboratory</span>
+        </div>
+        <div class="workspace-element el-9">
+            <span class="symbol">♨️</span>
+            <span class="name">Heat</span>
+        </div>
+        <div class="workspace-element el-10">
+            <span class="symbol">⚗️</span>
+            <span class="name">Alembic</span>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header id="main-header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="5 6 50 48" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <path id="hex-header" d="M0 -12 L10.4 -6 L10.4 6 L0 12 L-10.4 6 L-10.4 -6 Z" />
+                    </defs>
+                    <g fill="#33A83E">
+                        <use href="#hex-header" transform="translate(30,20)" />
+                        <use href="#hex-header" transform="translate(18,40)" />
+                        <use href="#hex-header" transform="translate(42,40)" />
+                    </g>
+                </svg>
+            </div>
+            <a href="#" class="logo-text"><span class="logo-lem">Lem</span><span class="logo-chem">Chem</span></a>
+        </div>
+        <div class="nav-links">
+            <a href="#hero" class="icon-btn" title="Play">▶️</a>
+            <a href="#about" class="icon-btn" title="About">ℹ️</a>
+            <a href="#community" class="icon-btn" title="Community" style="color:#FF4500;">
+                <svg viewBox="0 0 512 512" width="18" height="18" fill="currentColor" style="vertical-align:middle;">
+                    <path
+                        d="M440.3 203.5c-15 0-28.2 6.2-37.9 15.9-35.7-24.6-83.8-40.5-137.1-42.3L293 52.3l88.2 19.8c0 21.6 17.6 39.2 39.2 39.2 22 0 39.7-18.1 39.7-39.7s-17.6-39.7-39.7-39.7c-15.4 0-28.7 9.3-35.3 22l-97.4-21.6c-4.9-1.3-9.7 2.2-11 7.1L246.3 177c-52.9 2.2-100.5 18.1-136.3 42.7-9.7-10.1-23.4-16.3-38.4-16.3-25.6 0-46.3 20.7-46.3 46.3 0 17.6 9.7 32.6 24.3 40.1-1.3 6.6-1.8 13.2-1.8 20.3 0 71 89.1 128.7 199.3 128.7s199.3-57.8 199.3-128.7c0-7.1-.4-13.7-1.8-20.3 14.6-7.5 24.3-22.5 24.3-40.1 0-25.6-20.7-46.3-46.3-46.3zM153.5 257.6c0-18.5 15-33.5 33.5-33.5s33.5 15 33.5 33.5-15 33.5-33.5 33.5-33.5-15.4-33.5-33.5zm197.6 92.5c-19.8 19.8-54.7 20.7-95.2 20.7-12.8 0-28.2-.4-42.3-3.1-4.4-.9-7.1-5.3-6.2-9.7.9-4.4 5.3-7.1 9.7-6.2 12.3 2.2 25.6 2.6 38.8 2.6 36.6 0 65.7-1.3 80.7-16.3 3.1-3.1 8.4-3.1 11.5 0 3.1 3.5 3.1 8.8 3 12zM325 291.1c-18.5 0-33.5-15-33.5-33.5s15-33.5 33.5-33.5 33.5 15 33.5 33.5-15 33.5-33.5 33.5z" />
+                </svg>
+            </a>
+            <a href="#support" class="icon-btn" title="Support">❤️</a>
+        </div>
+    </header>
+
+    <section id="hero" class="content-wrapper">
+
+        <!-- Game Logo (Hexagon + Flame from Ages of Chem) -->
+        <svg class="game-logo" viewBox="0 0 40 40" width="140" height="140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="hex-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#33A83E" />
+                    <stop offset="100%" stop-color="#228B2E" />
+                </linearGradient>
+                <linearGradient id="flame-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#ef4444" />
+                    <stop offset="50%" stop-color="#f59e0b" />
+                    <stop offset="100%" stop-color="#fbbf24" />
+                </linearGradient>
+            </defs>
+            <polygon points="20,2 36,11.2 36,28.8 20,38 4,28.8 4,11.2" fill="url(#hex-grad)" stroke="#228B2E"
+                stroke-width="1" />
+            <path
+                d="M20,8 C20,8 21,12 22,14 C24,18 28,20 28,25 C28,29 24.5,32 20,32 C15.5,32 12,29 12,25 C12,20 16,18 18,14 C19,12 20,8 20,8 Z"
+                fill="url(#flame-grad)" opacity="0.95" />
+            <path
+                d="M20,14 C20,14 20.5,17 21.5,19 C22.5,21 24,22 24,25 C24,27 22.2,28.5 20,28.5 C17.8,28.5 16,27 16,25 C16,22 17.5,21 18.5,19 C19.5,17 20,14 20,14 Z"
+                fill="#fbbf24" opacity="0.8" />
+        </svg>
+
+        <h1 class="game-title">Ages of Chemistry</h1>
+        <p class="game-subtitle">Combine elements. Discover history. Master the universe.<br>Trace the entire arc of
+            chemical discovery from water and stone to modern semiconductors.</p>
+
+        <!-- Links to the relative path given by the user's screenshot -->
+        <a href="AgesofChem/AgesofChem.html" class="play-button">
+            <span class="play-icon">▶</span> Play Now
+        </a>
+
+    </section>
+
+    <!-- Info Sections -->
+    <section class="cards-section-wrapper">
+        <div class="bg-blobs">
+            <div class="bg-blob blob-1"></div>
+            <div class="bg-blob blob-2"></div>
+            <div class="bg-blob blob-3"></div>
+        </div>
+
+        <div class="info-cards-container">
+
+            <!-- About Card -->
+            <div id="about" class="info-card theme-about">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M9 3H15M10 9H14M3 20C3 20 6 12 10 9V3M21 20C21 20 18 12 14 9V3M3 20H21" />
+                        <path d="M12 12V20" />
+                        <path d="M7 16H17" />
+                    </svg>
+                </div>
+                <h2>About LemChem</h2>
+                <p><strong>LemChem</strong> is the home of interactive chemistry education projects created by
+                    <strong>Jessy M. Lemieux, Ph.D.</strong>, a chemist and college instructor on a mission to make
+                    science genuinely fun to learn.
+                </p>
+                <p>The flagship project, <strong>Ages of Chemistry</strong>, lets players combine elements and trace
+                    chemical discovery from primordial water and stone to modern semiconductors.</p>
+            </div>
+
+            <!-- Community Card -->
+            <div id="community" class="info-card theme-community">
+                <div class="card-icon">
+                    <svg viewBox="0 0 512 512" fill="currentColor">
+                        <path
+                            d="M440.3 203.5c-15 0-28.2 6.2-37.9 15.9-35.7-24.6-83.8-40.5-137.1-42.3L293 52.3l88.2 19.8c0 21.6 17.6 39.2 39.2 39.2 22 0 39.7-18.1 39.7-39.7s-17.6-39.7-39.7-39.7c-15.4 0-28.7 9.3-35.3 22l-97.4-21.6c-4.9-1.3-9.7 2.2-11 7.1L246.3 177c-52.9 2.2-100.5 18.1-136.3 42.7-9.7-10.1-23.4-16.3-38.4-16.3-25.6 0-46.3 20.7-46.3 46.3 0 17.6 9.7 32.6 24.3 40.1-1.3 6.6-1.8 13.2-1.8 20.3 0 71 89.1 128.7 199.3 128.7s199.3-57.8 199.3-128.7c0-7.1-.4-13.7-1.8-20.3 14.6-7.5 24.3-22.5 24.3-40.1 0-25.6-20.7-46.3-46.3-46.3zM153.5 257.6c0-18.5 15-33.5 33.5-33.5s33.5 15 33.5 33.5-15 33.5-33.5 33.5-33.5-15.4-33.5-33.5zm197.6 92.5c-19.8 19.8-54.7 20.7-95.2 20.7-12.8 0-28.2-.4-42.3-3.1-4.4-.9-7.1-5.3-6.2-9.7.9-4.4 5.3-7.1 9.7-6.2 12.3 2.2 25.6 2.6 38.8 2.6 36.6 0 65.7-1.3 80.7-16.3 3.1-3.1 8.4-3.1 11.5 0 3.1 3.5 3.1 8.8 3 12zM325 291.1c-18.5 0-33.5-15-33.5-33.5s15-33.5 33.5-33.5 33.5 15 33.5 33.5-15 33.5-33.5 33.5z" />
+                    </svg>
+                </div>
+                <h2>Join the Community</h2>
+                <p>Come talk about Ages of Chemistry, share your discoveries, suggest new elements, and give feedback.
+                    We'd love to hear from you!</p>
+                <a href="https://reddit.com/r/LemChem" target="_blank" class="reddit-btn">
+                    <svg viewBox="0 0 512 512" width="22" height="22" fill="currentColor">
+                        <path
+                            d="M440.3 203.5c-15 0-28.2 6.2-37.9 15.9-35.7-24.6-83.8-40.5-137.1-42.3L293 52.3l88.2 19.8c0 21.6 17.6 39.2 39.2 39.2 22 0 39.7-18.1 39.7-39.7s-17.6-39.7-39.7-39.7c-15.4 0-28.7 9.3-35.3 22l-97.4-21.6c-4.9-1.3-9.7 2.2-11 7.1L246.3 177c-52.9 2.2-100.5 18.1-136.3 42.7-9.7-10.1-23.4-16.3-38.4-16.3-25.6 0-46.3 20.7-46.3 46.3 0 17.6 9.7 32.6 24.3 40.1-1.3 6.6-1.8 13.2-1.8 20.3 0 71 89.1 128.7 199.3 128.7s199.3-57.8 199.3-128.7c0-7.1-.4-13.7-1.8-20.3 14.6-7.5 24.3-22.5 24.3-40.1 0-25.6-20.7-46.3-46.3-46.3zM153.5 257.6c0-18.5 15-33.5 33.5-33.5s33.5 15 33.5 33.5-15 33.5-33.5 33.5-33.5-15.4-33.5-33.5zm197.6 92.5c-19.8 19.8-54.7 20.7-95.2 20.7-12.8 0-28.2-.4-42.3-3.1-4.4-.9-7.1-5.3-6.2-9.7.9-4.4 5.3-7.1 9.7-6.2 12.3 2.2 25.6 2.6 38.8 2.6 36.6 0 65.7-1.3 80.7-16.3 3.1-3.1 8.4-3.1 11.5 0 3.1 3.5 3.1 8.8 3 12zM325 291.1c-18.5 0-33.5-15-33.5-33.5s15-33.5 33.5-33.5 33.5 15 33.5 33.5-15 33.5-33.5 33.5z" />
+                    </svg>
+                    Join r/LemChem
+                </a>
+            </div>
+
+            <!-- Support Card -->
+            <div id="support" class="info-card theme-support">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                        <line x1="6" y1="1" x2="6" y2="4"></line>
+                        <line x1="10" y1="1" x2="10" y2="4"></line>
+                        <line x1="14" y1="1" x2="14" y2="4"></line>
+                    </svg>
+                </div>
+                <h2>Support Our Mission</h2>
+                <p>LemChem is a passion project built on evenings and weekends and offered for free so that anyone can
+                    experience the joy of chemistry.</p>
+                <p>Your donations cover <strong>hosting and domain fees</strong>. As support grows, they will fund
+                    <strong>specialists</strong> to make every project even better.
+                </p>
+                <a href="https://ko-fi.com/lemieuxchem" target="_blank" class="donate-btn">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                    </svg>
+                    Donate on Ko-fi
+                </a>
+            </div>
+
+        </div> <!-- Close info-cards-container -->
+    </section> <!-- Close cards-section-wrapper -->
+
+    <!-- Scroll Reveal Script for Cards -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide cards initially via JS so they can animate in.
+            // If JS fails, cards stay visible (safe fallback).
+            // Only use opacity to hide — NOT translateY — because Chrome
+            // uses the visual (post-transform) position for scroll anchors,
+            // causing a 40px scroll overshoot on the first nav click.
+            const cards = document.querySelectorAll('.info-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = '';
+                            entry.target.style.animation = `cardReveal 0.6s ease forwards`;
+                        }, index * 150); // Stagger the animation
+                        observer.unobserve(entry.target); // Only animate once
+                    }
+                });
+            }, {
+                threshold: 0.2, // Trigger when 20% of the card is visible
+                rootMargin: "0px 0px -50px 0px" // Trigger slightly before it hits the bottom
+            });
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+
+            // Deferred prefetch: pre-load the game page AFTER the landing page
+            // is fully rendered so it doesn't compete with initial paint.
+            requestIdleCallback?.(() => {
+                const link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = 'AgesofChem/AgesofChem.html';
+                document.head.appendChild(link);
+            }) ?? setTimeout(() => {
+                const link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = 'AgesofChem/AgesofChem.html';
+                document.head.appendChild(link);
+            }, 2000);
+        });
+    </script>
+
+</body>
+
+</html>
