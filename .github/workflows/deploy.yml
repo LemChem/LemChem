@@ -17,7 +17,6 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           server-dir: ${{ secrets.FTP_REMOTE_DIR }}
-          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
