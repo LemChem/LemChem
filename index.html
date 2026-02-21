@@ -225,7 +225,7 @@
             padding: 0.75rem 1.5rem;
             border-bottom: 1px solid var(--border);
             box-shadow: var(--shadow-sm);
-            z-index: 100;
+            z-index: 1000;
             flex-wrap: wrap;
             gap: 0.5rem;
         }
@@ -239,8 +239,9 @@
         }
 
         .logo-icon {
-            width: 40px;
-            height: 35px;
+            width: 48px;
+            height: 44px;
+            flex-shrink: 0;
         }
 
         .logo-text {
@@ -460,6 +461,7 @@
         }
 
         .info-card {
+            scroll-margin-top: calc(50vh - 220px);
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -790,7 +792,7 @@
             <div class="logo">
                 <div class="logo-icon">
                     <!-- Smaller chemical structure SVG logo -->
-                    <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="22 5 56 58" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <path id="hex-header" d="M0 -14 L12 -7 L12 7 L0 14 L-12 7 L-12 -7 Z" />
                         </defs>
