@@ -1,5 +1,11 @@
 # Ages of Chemistry — Changelog
 
+## v0.9.1 (2026-02-21)
+
+### Text & Lore Updates — The Accuracy & Quality Pass
+- **Scientific Precision:** Corrected reaction descriptions to be technically accurate (e.g., specifying carbothermic reduction produces CO gas instead of CO₂, and matching exact electrolysis stoichiometry).
+- **Historical Context:** Credited diverse global cultures (e.g., Ancient Indian Wootz steel, Jōmon and Nok pottery, Islamic Golden Age alembic refinement, ancient Zawar zinc metallurgists).
+- **Writing Polish:** Improved text flow and fixed grammar across dozens of elements and achievements without altering the underlying gameplay discovery logic.
 ## v0.9.0 (2026-02-20)
 
 ### Engine Optimizations
