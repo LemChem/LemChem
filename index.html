@@ -461,7 +461,7 @@
         }
 
         .info-card {
-            scroll-margin-top: calc(50vh - 220px);
+            scroll-margin-top: 80px;
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -660,9 +660,14 @@
             }
 
             .nav-links {
-                flex: 1;
+                flex-shrink: 0;
                 gap: 0.4rem;
                 justify-content: flex-end;
+            }
+
+            .logo-icon {
+                width: 38px;
+                height: 34px;
             }
 
             .icon-btn {
