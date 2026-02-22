@@ -469,7 +469,6 @@
         }
 
         .info-card {
-            scroll-margin-top: 100px;
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -721,8 +720,6 @@
             .info-card {
                 padding: 1.5rem 1.25rem;
                 border-radius: 16px;
-                /* Add extra scroll padding specifically for these cards on mobile so they center well */
-                scroll-margin-top: 15vh;
             }
 
             .card-icon {
@@ -1007,6 +1004,25 @@
 
             cards.forEach(card => {
                 observer.observe(card);
+            });
+
+            // Smooth centered scrolling for navigation links
+            document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#hero') return; // Let default top-scroll handle the hero
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        e.preventDefault();
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                        // Update URL hash without jumping
+                        history.pushState(null, null, targetId);
+                    }
+                });
             });
 
             // Deferred prefetch: pre-load the game page AFTER the landing page
