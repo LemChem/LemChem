@@ -41,6 +41,8 @@
             padding: 0;
             scroll-behavior: smooth;
             scroll-padding-top: 100px;
+            height: 100%;
+            /* Ensure html doesn't trap scroll */
         }
 
         body {
@@ -48,7 +50,8 @@
             padding: 0;
             width: 100%;
             max-width: 100vw;
-            min-height: 100vh;
+            min-height: 100%;
+            /* Better than 100vh for mobile scrolling */
             font-family: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
             background-color: #f8fafc;
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
@@ -396,6 +399,8 @@
             background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.6) 20%, rgba(248, 250, 252, 0.95) 100%);
             overflow: hidden;
             /* Force Android browsers to clip blobs */
+            padding-bottom: 4rem;
+            /* Safe padding for absolute footer elements */
         }
 
         .bg-blobs {
@@ -710,6 +715,7 @@
             .info-cards-container {
                 padding: 1rem 1rem 8rem 1rem;
                 gap: 2rem;
+                min-height: auto;
             }
 
             .info-card {
