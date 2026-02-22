@@ -469,6 +469,7 @@
         }
 
         .info-card {
+            scroll-margin-top: 100px;
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -720,6 +721,7 @@
             .info-card {
                 padding: 1.5rem 1.25rem;
                 border-radius: 16px;
+                scroll-margin-top: 15vh;
             }
 
             .card-icon {
@@ -1006,7 +1008,7 @@
                 observer.observe(card);
             });
 
-            // Smooth centered scrolling for navigation links
+            // Smooth centered scrolling for navigation links, accounting for fixed header
             document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     const targetId = this.getAttribute('href');
@@ -1015,10 +1017,25 @@
                     const targetElement = document.querySelector(targetId);
                     if (targetElement) {
                         e.preventDefault();
-                        targetElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
+
+                        // Calculate position: center of the remaining viewport *below* the header
+                        const headerHeight = document.getElementById('main-header').offsetHeight;
+                        const viewportHeight = window.innerHeight;
+                        const elementHeight = targetElement.offsetHeight;
+
+                        const elementTop = targetElement.getBoundingClientRect().top + window.scrollY;
+
+                        // Center = Element Top - (Half of viewport below header) + (Half of element)
+                        let scrollPos = elementTop - headerHeight - ((viewportHeight - headerHeight - elementHeight) / 2);
+
+                        // Don't scroll past the very top
+                        if (scrollPos < 0) scrollPos = 0;
+
+                        window.scrollTo({
+                            top: scrollPos,
+                            behavior: 'smooth'
                         });
+
                         // Update URL hash without jumping
                         history.pushState(null, null, targetId);
                     }
